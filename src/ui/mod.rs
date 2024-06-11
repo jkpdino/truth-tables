@@ -37,14 +37,14 @@ impl Default for App {
 impl App {
 	pub fn run(mut self) -> Result<(), Box<dyn Error>> {
 		// setup terminal
-		enable_raw_mode();
+		enable_raw_mode()?;
 		let mut stdout = io::stdout();
-		execute!(stdout, EnterAlternateScreen, EnableMouseCapture);
+		execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
 		let backend = CrosstermBackend::new(stdout);
 		let mut terminal = Terminal::new(backend).unwrap();
 
 		loop {
-			terminal.draw(|f| ui(f, &self));
+			terminal.draw(|f| ui(f, &self))?;
 
 			self.process_input();
 
@@ -54,20 +54,20 @@ impl App {
 		}
 
 		// cleanup terminal
-		disable_raw_mode();
+		disable_raw_mode()?;
 		execute!(
 			terminal.backend_mut(),
 			LeaveAlternateScreen,
 			DisableMouseCapture
-		);
-		terminal.show_cursor();
+		)?;
+		terminal.show_cursor()?;
 
 		Ok(())
 	}
 
 	pub fn process_input(&mut self) {
 		if let Ok(Event::Key(key)) = event::read() {
-			if key.modifiers.contains( KeyModifiers::CONTROL ) && key.code == KeyCode::Char('z') {
+			if key.modifiers.contains( KeyModifiers::CONTROL ) && key.code == KeyCode::Char('c') {
 				self.state = State::Closed;
 				return
 			}
@@ -77,11 +77,12 @@ impl App {
 				State::Display => self.process_input_display(key),
 				State::Closed => {}
 			}
-		}
-
-		
+		}		
 	}
 
+	///
+	/// Transform the input character to a more readable character
+	/// 
 	fn input_char(&mut self, c: char) {
 		match (self.last2, self.last, c) {
 			(_, '!', '=') => {

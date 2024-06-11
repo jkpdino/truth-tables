@@ -1,5 +1,3 @@
-#![feature(const_extern_fn)]
-
 use itertools::Itertools;
 use parser::Lexer;
 
